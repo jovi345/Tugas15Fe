@@ -19,30 +19,30 @@
     </form>
 
     <ul class="task-list">
-      <li v-for="(val, id) in tasks" :key="id">
+      <li v-for="val in tasks" :key="val.id">
         <div class="taskItem">
           <div class="task">
             <input
               type="checkbox"
-              v-model="val.isChecked"
-              @change="selectOnlyOne(id)"
+              v-model="val.is_completed"
+              @change="selectOnlyOne(val.id)"
             />
 
-            <p v-if="!val.isChecked">{{ val.name }}</p>
-            <s v-if="val.isChecked">{{ val.name }}</s>
+            <p v-if="!val.is_completed">{{ val.job }}</p>
+            <s v-if="val.is_completed">{{ val.job }}</s>
           </div>
           <div class="icons">
             <box-icon
               type="solid"
               name="trash"
-              @click.prevent="deleteTask(id)"
+              @click.prevent="deleteTask(val.id)"
               color="#f38ba8"
               class="box-icon"
             ></box-icon>
             <box-icon
               type="solid"
               name="edit"
-              @click.prevent="editTask(id)"
+              @click.prevent="editTask(val.id)"
               color="#a6e3a1"
               class="box-icon"
             ></box-icon>
@@ -54,21 +54,38 @@
 </template>
 
 <script>
+import { initializeAuth, useUserStore } from "@/stores/user";
+import axiosJWT from "@/utils/axios";
 import "boxicons";
 
 export default {
+  setup() {
+    const userStore = useUserStore();
+    return {
+      userStore,
+    };
+  },
   data() {
     return {
       inputTask: "",
-      tasks: [
-        { name: "hello", isChecked: false },
-        { name: "tes", isChecked: false },
-        { name: "dunia", isChecked: false },
-      ],
+      tasks: [],
     };
   },
   methods: {
-    async getTask() {},
+    async isAuthenticated() {
+      const response = await initializeAuth();
+      this.userStore.setLogin(response);
+    },
+
+    async getTask() {
+      try {
+        const response = await axiosJWT.get("/task/getall");
+        this.tasks = response.data.result;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
     selectOnlyOne(id) {
       console.log(id);
     },
@@ -99,6 +116,7 @@ export default {
   },
   mounted() {
     this.getTask();
+    this.isAuthenticated();
   },
 };
 </script>

@@ -1,23 +1,36 @@
 <template>
   <div class="container">
-    <form action="" class="login-form">
+    <form @submit.prevent="loginUser" class="login-form">
       <h2>Login</h2>
+      <p id="errorMsg" v-if="errorMessage">{{ errorMessage }}</p>
       <div class="input">
-        <input type="email" placeholder="Email" />
+        <input type="email" placeholder="Email" required v-model="email" />
       </div>
       <div class="input">
-        <input type="password" placeholder="Password" />
+        <input
+          type="password"
+          placeholder="Password"
+          required
+          v-model="password"
+        />
       </div>
 
+      <p id="sign-in">
+        Don't have an account?
+        <router-link to="/register" style="color: var(--sapphire)"
+          >Sign up</router-link
+        >
+      </p>
+
       <div class="center">
-        <button>Log In</button>
+        <button type="submit">Log In</button>
       </div>
     </form>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import { axiosInstance } from "@/utils/axios";
 
 export default {
   data() {
@@ -34,11 +47,12 @@ export default {
           email: this.email,
           password: this.password,
         };
-        const response = await axios.post("/", data);
-        console.log(response);
+        const response = await axiosInstance.post("/user/login", data);
+        if (response.status == 200) {
+          this.$router.push("/");
+        }
       } catch (error) {
-        this.errorMessage = error;
-        console.error(error);
+        this.errorMessage = error.response.data.result;
       }
     },
   },
@@ -67,6 +81,8 @@ input {
   outline: none;
   border-radius: 4px;
   width: 95%;
+  background-color: var(--inputBackground);
+  color: var(--text);
 }
 
 .center {
@@ -84,5 +100,13 @@ button {
   background-color: #8839ef;
   font-weight: 700;
   outline: none;
+}
+
+#sign-in {
+  margin-top: 8px;
+}
+
+#errorMsg {
+  color: var(--red);
 }
 </style>
