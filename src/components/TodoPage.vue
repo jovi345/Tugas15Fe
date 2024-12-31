@@ -3,20 +3,45 @@
     <div class="stats-container">
       <div class="details">
         <h1>Todo App</h1>
-        <p>Keep it up!</p>
+        <div style="display: flex; flex-direction: row; gap: 20px">
+          <p>Welcome</p>
+          <p @click="logout">
+            <router-link to="/" style="color: var(--sapphire)"
+              >Logout</router-link
+            >
+          </p>
+        </div>
         <div id="progressBar">
-          <div id="progress"></div>
+          <div id="progress" style="width: 50%"></div>
         </div>
       </div>
       <div class="stats-numbers">
-        <p id="numbers">{{ tasks.length }}</p>
+        <p id="numbers">
+          {{ tasks.length }}
+        </p>
       </div>
     </div>
 
-    <form @submit.prevent="submitTask">
-      <input v-model="inputTask" type="text" placeholder="Write your task" />
+    <form @submit.prevent="submitTask" v-if="submit">
+      <input
+        v-model="inputTask"
+        type="text"
+        placeholder="Write your task"
+        required
+      />
       <button type="submit">+</button>
     </form>
+
+    <form @submit.prevent="editTask(idChoosen)" v-if="edit">
+      <input
+        v-model="inputTask"
+        type="text"
+        placeholder="Write your task"
+        required
+      />
+      <button type="submit">+</button>
+    </form>
+    <p v-if="warn" class="warn">Please fill in</p>
 
     <ul class="task-list">
       <li v-for="val in tasks" :key="val.id">
@@ -42,7 +67,7 @@
             <box-icon
               type="solid"
               name="edit"
-              @click.prevent="editTask(val.id)"
+              @click.prevent="chooseEdit(val)"
               color="#a6e3a1"
               class="box-icon"
             ></box-icon>
@@ -54,7 +79,7 @@
 </template>
 
 <script>
-import { initializeAuth, useUserStore } from "@/stores/user";
+import { useUserStore } from "@/stores/user";
 import axiosJWT from "@/utils/axios";
 import "boxicons";
 
@@ -69,14 +94,15 @@ export default {
     return {
       inputTask: "",
       tasks: [],
+      warn: false,
+      editJob: "",
+      submit: true,
+      edit: false,
+      idChoosen: "",
+      count: 0,
     };
   },
   methods: {
-    async isAuthenticated() {
-      const response = await initializeAuth();
-      this.userStore.setLogin(response);
-    },
-
     async getTask() {
       try {
         const response = await axiosJWT.get("/task/getall");
@@ -86,21 +112,48 @@ export default {
       }
     },
 
-    selectOnlyOne(id) {
-      console.log(id);
-    },
-
-    async submitTask() {
+    async selectOnlyOne(id) {
       try {
-        // const data = { job: this.inputTask };
+        await axiosJWT.patch(`/task/edit/status/${id}`);
       } catch (error) {
         console.error(error);
       }
     },
 
+    async submitTask() {
+      try {
+        if (this.inputTask.trim() == "") {
+          this.warn = true;
+          setTimeout(() => {
+            this.warn = false;
+          }, 2500);
+          return;
+        }
+        const data = { job: this.inputTask };
+        const response = await axiosJWT.post("/task/add", data);
+        const newTask = response.data.result;
+        this.tasks = [newTask, ...this.tasks];
+        this.inputTask = "";
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    chooseEdit(val) {
+      this.submit = false;
+      this.edit = true;
+      this.inputTask = val.job;
+      this.tasks = this.tasks.filter((task) => task.id !== val.id);
+      this.idChoosen = val.id;
+    },
+
     async editTask(id) {
       try {
-        console.log(`edit ${id}`);
+        const data = { job: this.inputTask };
+        const response = await axiosJWT.patch(`/task/edit/job/${id}`, data);
+        const newTask = response.data.result;
+        this.tasks = [newTask, ...this.tasks];
+        this.inputTask = "";
       } catch (error) {
         console.error(error);
       }
@@ -108,7 +161,16 @@ export default {
 
     async deleteTask(id) {
       try {
-        console.log(`delete ${id}`);
+        this.tasks = this.tasks.filter((task) => task.id !== id);
+        await axiosJWT.delete(`/task/delete/${id}`);
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    async logout() {
+      try {
+        await axiosJWT.delete("/user/logout");
+        this.$router.push("/login");
       } catch (error) {
         console.error(error);
       }
@@ -116,7 +178,6 @@ export default {
   },
   mounted() {
     this.getTask();
-    this.isAuthenticated();
   },
 };
 </script>
@@ -154,7 +215,6 @@ export default {
 }
 
 #progress {
-  width: 50%;
   height: 10px;
   background-color: var(--green);
   border-radius: 10px;
@@ -241,5 +301,9 @@ button {
   height: 24px;
   margin: 2px;
   cursor: pointer;
+}
+
+.warn {
+  color: var(--red);
 }
 </style>

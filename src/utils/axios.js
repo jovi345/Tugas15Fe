@@ -2,12 +2,12 @@ import { useUserStore } from "@/stores/user";
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL: "http://localhost:8080/api/v1",
+  baseURL: `${import.meta.env.VITE_BASE_URL}/api/v1`,
   withCredentials: true,
 });
 
 const axiosJWT = axios.create({
-  baseURL: "http://localhost:8080/api/v1",
+  baseURL: `${import.meta.env.VITE_BASE_URL}/api/v1`,
   withCredentials: true,
 });
 

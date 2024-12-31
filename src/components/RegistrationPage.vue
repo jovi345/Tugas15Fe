@@ -65,13 +65,19 @@ export default {
           confirm_password: this.confirmPassword,
         };
         const response = await axiosInstance.post("/user/register", data);
-        console.log(response);
-        this.successMsg = "Successfully registered. Please login now!";
+        if (response.status == 201) {
+          this.successMsg = "Successfully registered. Please login now!";
+          this.errorMsg = "";
+        }
         if (this.password !== this.confirmPassword) {
           this.errorMsg = "Password do not match!";
+          this.successMsg = "";
         }
       } catch (error) {
-        console.error(error);
+        if (error.status == 400) {
+          this.errorMsg = error.response.data.result;
+          this.successMsg = "";
+        }
       }
     },
   },

@@ -6,6 +6,7 @@ export const useUserStore = defineStore("user", {
     return {
       token: null,
       isLoggedIn: false,
+      email: "",
     };
   },
   actions: {
@@ -15,6 +16,9 @@ export const useUserStore = defineStore("user", {
     setLogin(isLoggedIn) {
       this.isLoggedIn = isLoggedIn;
     },
+    setEmail(email) {
+      this.email = email;
+    },
   },
 });
 
@@ -23,6 +27,7 @@ export const initializeAuth = async () => {
   try {
     const response = await axiosInstance.post("/user/refreshtoken", {});
     userStore.setToken(response.data.result);
+
     return true;
   } catch {
     return false;

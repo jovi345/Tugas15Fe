@@ -30,6 +30,7 @@
 </template>
 
 <script>
+import { initializeAuth, useUserStore } from "@/stores/user";
 import { axiosInstance } from "@/utils/axios";
 
 export default {
@@ -49,12 +50,23 @@ export default {
         };
         const response = await axiosInstance.post("/user/login", data);
         if (response.status == 200) {
+          useUserStore().setEmail(this.email);
           this.$router.push("/");
         }
       } catch (error) {
         this.errorMessage = error.response.data.result;
       }
     },
+
+    async isAuthenticated() {
+      const response = await initializeAuth();
+      if (response) {
+        this.$router.push("/");
+      }
+    },
+  },
+  mounted() {
+    this.isAuthenticated();
   },
 };
 </script>
